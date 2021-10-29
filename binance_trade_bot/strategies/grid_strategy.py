@@ -18,8 +18,8 @@ class Strategy(AutoTrader):
         # Display on the console, the current coin+Bridge, so users can see *some* activity and not think the bot has
         # stopped. Not logging though to reduce log size.
         print(
-            f"{datetime.now()} - CONSOLE - INFO - I checking price of "
-            f": {current_coin + self.config.BRIDGE} ",
+            f"{datetime.now()} - CONSOLE - INFO - Checking price of "
+            f": {current_coin + self.config.BRIDGE} \n",
             end="\r",
         )
 
@@ -30,7 +30,7 @@ class Strategy(AutoTrader):
             return
 
         # self._jump_to_best_coin(current_coin, current_coin_price)
-        print(f'current price: {current_coin_price}')
+        print(f'current price: {current_coin_price}\n')
 
     def bridge_scout(self):
         current_coin = self.db.get_current_coin()
