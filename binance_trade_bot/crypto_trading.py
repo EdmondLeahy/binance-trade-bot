@@ -19,6 +19,7 @@ def main():
     # check if we can access API feature that require valid config
     try:
         _ = manager.get_account()
+        logger.debug("Access granted to Binance API")
     except Exception as e:  # pylint: disable=broad-except
         logger.error("Couldn't access Binance API - API keys may be wrong or lack sufficient permissions")
         logger.error(e)
