@@ -23,8 +23,8 @@ class Strategy(AutoTrader):
             self.logger.warning(f'No saved last buy price. Creating first at: {curr_price}')
             self.last_transation_ratio = curr_price
 
-        self.buy_grid_ratio = np.round(self.last_transation_ratio * (1 - self.grid_size), 2)
-        self.sell_grid_ratio = np.round(self.last_transation_ratio * (1 + self.grid_size), 2)
+        self.buy_grid_ratio = self.last_transation_ratio * (1 - self.grid_size)
+        self.sell_grid_ratio = self.last_transation_ratio * (1 + self.grid_size)
         self.logger.info(f'reset grid lines: {self.buy_grid_ratio } | {self.sell_grid_ratio}')
         self.last_transation_ratio = self.last_transation_ratio
 
@@ -52,9 +52,9 @@ class Strategy(AutoTrader):
             if current_price < self.buy_grid_ratio:
                 self.buy_from_grid_trigger()
             else:
-                self.logger.info(f'No action. Within the doldrums. {np.round(self.buy_grid_ratio - current_price,2)} | '
+                self.logger.info(f'No action. Within the doldrums. {self.buy_grid_ratio} | '
                                  f'{current_price} | '
-                                 f'{np.round(self.sell_grid_ratio - current_price, 2)}'
+                                 f'{self.sell_grid_ratio}'
                                  f'| {self.num_trades}')
                 return
 
@@ -65,8 +65,8 @@ class Strategy(AutoTrader):
         self.num_trades += 1
 
     def buy_from_grid_trigger(self):
-        # self.manager.buy_alt(self.current_coin, self.config.BRIDGE)
-        self.logger.warning(f'STUBBED BUY CALL {self.manager._buy_quantity(self.current_coin, self.config.BRIDGE)}')
+        self.manager.buy_alt(self.current_coin, self.config.BRIDGE)
+        # self.logger.warning(f'STUBBED BUY CALL {self.manager._buy_quantity(self.current_coin, self.config.BRIDGE)}')
 
     def sell_from_grid_trigger(self):
         # self.manager.sell_alt(self.current_coin, self.config.BRIDGE)
