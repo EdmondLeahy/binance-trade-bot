@@ -32,6 +32,9 @@ class Config:  # pylint: disable=too-few-public-methods,too-many-instance-attrib
         self.BRIDGE_SYMBOL = os.environ.get("BRIDGE_SYMBOL") or config.get(USER_CFG_SECTION, "bridge")
         self.BRIDGE = Coin(self.BRIDGE_SYMBOL, False)
 
+        # grid wager size (percent of holding to buy/sell each time)
+        self.WAGER_SIZE = os.environ.get("WAGER_SIZE") or config.get(USER_CFG_SECTION, "wager")
+
         # Prune settings
         self.SCOUT_HISTORY_PRUNE_TIME = float(
             os.environ.get("HOURS_TO_KEEP_SCOUTING_HISTORY") or config.get(USER_CFG_SECTION, "hourToKeepScoutHistory")

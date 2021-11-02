@@ -1,5 +1,7 @@
 #!python3
+
 import time
+import sys
 
 from .binance_api_manager import BinanceAPIManager
 from .config import Config
@@ -39,14 +41,20 @@ def main():
 
     trader.initialize()
 
-    schedule = SafeScheduler(logger)
-    schedule.every(config.SCOUT_SLEEP_TIME).seconds.do(trader.scout).tag("scouting")
-    schedule.every(1).minutes.do(trader.update_values).tag("updating value history")
-    schedule.every(1).minutes.do(db.prune_scout_history).tag("pruning scout history")
-    schedule.every(1).hours.do(db.prune_value_history).tag("pruning value history")
+    # schedule = SafeScheduler(logger)
+    # schedule.every(config.SCOUT_SLEEP_TIME).seconds.do(trader.scout).tag("scouting")
+    # schedule.every(1).minutes.do(trader.update_values).tag("updating value history")
+    # schedule.every(1).minutes.do(db.prune_scout_history).tag("pruning scout history")
+    # schedule.every(1).hours.do(db.prune_value_history).tag("pruning value history")
+
+
     try:
         while True:
-            schedule.run_pending()
+            # schedule.run_pending()
+            trader.scout()
+            trader.update_values()
+            db.prune_scout_history()
+            db.prune_value_history()
             time.sleep(1)
     finally:
         manager.stream_manager.close()
