@@ -1,4 +1,5 @@
 import math
+import numpy as np
 import time
 import traceback
 from typing import Dict, Optional
@@ -147,7 +148,14 @@ class BinanceAPIManager:
 
     @cached(cache=TTLCache(maxsize=2000, ttl=43200))
     def get_min_notional(self, origin_symbol: str, target_symbol: str):
-        return float(self.get_symbol_filter(origin_symbol, target_symbol, "MIN_NOTIONAL")["minNotional"])
+        notional = None
+        while not notional:
+            try:
+                notional = float(self.get_symbol_filter(origin_symbol, target_symbol, "MIN_NOTIONAL")["minNotional"])
+            except ConnectionError:
+                self.logger.info('Got a connection error. Retrying')
+                time.sleep(1)
+        return notional
 
     def _wait_for_order(
         self, order_id, origin_symbol: str, target_symbol: str
@@ -236,14 +244,19 @@ class BinanceAPIManager:
     def buy_alt(self, origin_coin: Coin, target_coin: Coin) -> BinanceOrder:
         return self.retry(self._buy_alt, origin_coin, target_coin)
 
-    def _buy_quantity(
-        self, origin_symbol: str, target_symbol: str, target_balance: float = None, from_coin_price: float = None
-    ):
-        target_balance = target_balance or self.get_currency_balance(target_symbol)
-        from_coin_price = from_coin_price or self.get_ticker_price(origin_symbol + target_symbol)
+    def _buy_quantity(self, origin_symbol, target_symbol):
+        origin_balance = self.get_currency_balance(origin_symbol)
+        from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
+        # Set at WAGER percent of what we are currently holding
+        buy_amount = ((self.config.WAGER_SIZE/100)*origin_balance)*from_coin_price # IN TARGET
+        notional = self.get_min_notional(origin_symbol, target_symbol) # IN TARGET
+        if buy_amount < notional:
+            buy_amount = notional
         origin_tick = self.get_alt_tick(origin_symbol, target_symbol)
-        return math.floor(target_balance * 10 ** origin_tick / from_coin_price) / float(10 ** origin_tick)
+
+        buy_quantity = (np.round(buy_amount/origin_tick, decimals=0)*origin_tick) / from_coin_price
+        return buy_quantity
 
     def _buy_alt(self, origin_coin: Coin, target_coin: Coin):
         """
@@ -260,7 +273,7 @@ class BinanceAPIManager:
         target_balance = self.get_currency_balance(target_symbol)
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
-        order_quantity = self._buy_quantity(origin_symbol, target_symbol, target_balance, from_coin_price)
+        order_quantity = self._buy_quantity(origin_symbol, target_symbol)
         self.logger.info(f"BUY QTY {order_quantity} of <{origin_symbol}>")
 
         # Try to buy until successful
@@ -297,11 +310,19 @@ class BinanceAPIManager:
     def sell_alt(self, origin_coin: Coin, target_coin: Coin) -> BinanceOrder:
         return self.retry(self._sell_alt, origin_coin, target_coin)
 
-    def _sell_quantity(self, origin_symbol: str, target_symbol: str, origin_balance: float = None):
-        origin_balance = origin_balance or self.get_currency_balance(origin_symbol)
+    def _sell_quantity(self, origin_symbol, target_symbol):
+        origin_balance = self.get_currency_balance(origin_symbol)
+        to_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
-        origin_tick = self.get_alt_tick(origin_symbol, target_symbol)
-        return math.floor(origin_balance * 10 ** origin_tick) / float(10 ** origin_tick)
+        # Set at WAGER percent of what we are currently holding
+        sell_amount = (self.config.WAGER_SIZE / 100) * origin_balance * to_coin_price # in TARGET
+        min_notional = self.get_min_notional(origin_symbol, target_symbol) # in TARGET
+        if sell_amount < min_notional:
+            sell_amount = min_notional
+        origin_tick = self.get_alt_tick(origin_symbol, target_symbol) # in TARGET
+
+        sell_quantity_origin = (np.round(sell_amount / origin_tick, decimals=0) * origin_tick) / to_coin_price # in ORIGIN
+        return sell_quantity_origin
 
     def _sell_alt(self, origin_coin: Coin, target_coin: Coin):
         """
@@ -318,7 +339,7 @@ class BinanceAPIManager:
         target_balance = self.get_currency_balance(target_symbol)
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
-        order_quantity = self._sell_quantity(origin_symbol, target_symbol, origin_balance)
+        order_quantity = self._sell_quantity(origin_symbol, target_symbol)
         self.logger.info(f"Selling {order_quantity} of {origin_symbol}")
 
         self.logger.info(f"Balance is {origin_balance}")

@@ -18,6 +18,7 @@ class Config:  # pylint: disable=too-few-public-methods,too-many-instance-attrib
             "scout_sleep_time": "5",
             "hourToKeepScoutHistory": "1",
             "tld": "com",
+            "gridTrigger": 0.0005,
             "strategy": "default",
             "sell_timeout": "0",
             "buy_timeout": "0",
@@ -33,7 +34,9 @@ class Config:  # pylint: disable=too-few-public-methods,too-many-instance-attrib
         self.BRIDGE = Coin(self.BRIDGE_SYMBOL, False)
 
         # grid wager size (percent of holding to buy/sell each time)
-        self.WAGER_SIZE = os.environ.get("WAGER_SIZE") or config.get(USER_CFG_SECTION, "wager")
+        self.WAGER_SIZE = float(os.environ.get("WAGER_SIZE") or config.get(USER_CFG_SECTION, "wager"))
+        # grid size (ratio on either side of current buy ratio, percent)
+        self.GRID_TRIGGER_SIZE = float(os.environ.get("WAGER_SIZE") or config.get(USER_CFG_SECTION, "GridTrigger"))
 
         # Prune settings
         self.SCOUT_HISTORY_PRUNE_TIME = float(

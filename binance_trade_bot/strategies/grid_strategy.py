@@ -12,21 +12,21 @@ class Strategy(AutoTrader):
         self.initialize_current_coin()
         self.buy_grid_ratio = None
         self.sell_grid_ratio = None
-        self.last_buy_ratio = None
-        self.grid_size = 0.0005
+        self.last_transation_ratio = None
+        self.grid_size = self.config.GRID_TRIGGER_SIZE
         self.current_coin = self.db.get_current_coin()
         self.set_buy_sell_grid_lines()
 
-    def set_buy_sell_grid_lines(self, last_buy_price=None):
-        if not last_buy_price:
+    def set_buy_sell_grid_lines(self):
+        if not self.last_transation_ratio:
             curr_price = self.get_current_price_ratio(self.db.get_current_coin(), self.config.BRIDGE)
             self.logger.warning(f'No saved last buy price. Creating first at: {curr_price}')
-            last_buy_price = curr_price
+            self.last_transation_ratio = curr_price
 
-        self.buy_grid_ratio = np.round(last_buy_price*(1-self.grid_size), 2)
-        self.sell_grid_ratio = np.round(last_buy_price*(1+self.grid_size), 2)
+        self.buy_grid_ratio = np.round(self.last_transation_ratio * (1 - self.grid_size), 2)
+        self.sell_grid_ratio = np.round(self.last_transation_ratio * (1 + self.grid_size), 2)
         self.logger.info(f'reset grid lines: {self.buy_grid_ratio } | {self.sell_grid_ratio}')
-        self.last_buy_ratio = last_buy_price
+        self.last_transation_ratio = self.last_transation_ratio
 
     def get_current_price_ratio(self, coin1, coin2):
         return self.manager.get_ticker_price(coin1 + coin2)
@@ -59,15 +59,16 @@ class Strategy(AutoTrader):
 
         else:
             self.sell_from_grid_trigger()
-        self.set_buy_sell_grid_lines(last_buy_price=current_price)
+        self.last_transation_ratio = current_price
+        self.set_buy_sell_grid_lines()
 
     def buy_from_grid_trigger(self):
         # self.manager.buy_alt(self.current_coin, self.config.BRIDGE)
-        self.logger.warning('STUBBED BUY CALL')
+        self.logger.warning(f'STUBBED BUY CALL {self.manager._buy_quantity(self.current_coin, self.config.BRIDGE)}')
 
     def sell_from_grid_trigger(self):
         # self.manager.sell_alt(self.current_coin, self.config.BRIDGE)
-        self.logger.warning('STUBBED SELL CALL')
+        self.logger.warning(f'STUBBED SELL CALL {self.manager._sell_quantity(self.current_coin, self.config.BRIDGE)}')
 
     def bridge_scout(self):
         current_coin = self.db.get_current_coin()
