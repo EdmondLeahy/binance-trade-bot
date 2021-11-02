@@ -274,6 +274,10 @@ class BinanceAPIManager:
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
         order_quantity = self._buy_quantity(origin_symbol, target_symbol)
+
+        if target_balance < order_quantity*from_coin_price:
+            self.logger.warning('Not enough balance to buy! Cancelling')
+            return None
         self.logger.info(f"BUY QTY {order_quantity} of <{origin_symbol}>")
 
         # Try to buy until successful
@@ -340,6 +344,9 @@ class BinanceAPIManager:
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
         order_quantity = self._sell_quantity(origin_symbol, target_symbol)
+        if origin_balance < order_quantity:
+            self.logger.warning('Not enough balance to sell! Cancelling')
+            return None
         self.logger.info(f"Selling {order_quantity} of {origin_symbol}")
 
         self.logger.info(f"Balance is {origin_balance}")

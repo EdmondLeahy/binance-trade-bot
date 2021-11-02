@@ -54,13 +54,15 @@ class Strategy(AutoTrader):
             else:
                 self.logger.info(f'No action. Within the doldrums. {np.round(self.buy_grid_ratio - current_price,2)} | '
                                  f'{current_price} | '
-                                 f'{np.round(self.sell_grid_ratio - current_price, 2)}')
+                                 f'{np.round(self.sell_grid_ratio - current_price, 2)}'
+                                 f'| {self.num_trades}')
                 return
 
         else:
             self.sell_from_grid_trigger()
         self.last_transation_ratio = current_price
         self.set_buy_sell_grid_lines()
+        self.num_trades += 1
 
     def buy_from_grid_trigger(self):
         # self.manager.buy_alt(self.current_coin, self.config.BRIDGE)

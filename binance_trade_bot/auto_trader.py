@@ -16,6 +16,7 @@ class AutoTrader:
         self.db = database
         self.logger = logger
         self.config = config
+        self.num_trades = 0
 
     def initialize(self):
         self.initialize_trade_thresholds()
