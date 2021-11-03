@@ -255,7 +255,7 @@ class BinanceAPIManager:
             buy_amount = notional
         origin_tick = self.get_alt_tick(origin_symbol, target_symbol)
 
-        buy_quantity = np.round(((buy_amount/origin_tick)*origin_tick) / from_coin_price, 6)
+        buy_quantity = np.round(((buy_amount/origin_tick)*origin_tick) / from_coin_price, 4)
         return buy_quantity
 
     def _buy_alt(self, origin_coin: Coin, target_coin: Coin):
@@ -325,7 +325,7 @@ class BinanceAPIManager:
             sell_amount = min_notional
         origin_tick = self.get_alt_tick(origin_symbol, target_symbol) # in TARGET
 
-        sell_quantity_origin = np.round(((sell_amount / origin_tick) * origin_tick) / to_coin_price, 6)# in ORIGIN
+        sell_quantity_origin = np.round(((sell_amount / origin_tick) * origin_tick) / to_coin_price, 4)# in ORIGIN
         return sell_quantity_origin
 
     def _sell_alt(self, origin_coin: Coin, target_coin: Coin):

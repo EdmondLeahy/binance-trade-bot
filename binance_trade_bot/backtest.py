@@ -52,13 +52,17 @@ class MockBinanceManager(BinanceAPIManager):
                 end_date = datetime.now()
             end_date = end_date.strftime("%d %b %Y %H:%M:%S")
             self.logger.info(f"Fetching prices for {ticker_symbol} between {self.datetime} and {end_date}")
-            for result in self.binance_client.get_historical_klines(
-                ticker_symbol, "1m", target_date, end_date, limit=1000
-            ):
-                date = datetime.utcfromtimestamp(result[0] / 1000).strftime("%d %b %Y %H:%M:%S")
-                price = float(result[1])
-                cache[f"{ticker_symbol} - {date}"] = price
-            cache.commit()
+            try:
+                for result in self.binance_client.get_historical_klines(
+                    ticker_symbol, "1m", target_date, end_date, limit=1000
+                ):
+                    date = datetime.utcfromtimestamp(result[0] / 1000).strftime("%d %b %Y %H:%M:%S")
+                    price = float(result[1])
+                    cache[f"{ticker_symbol} - {date}"] = price
+                cache.commit()
+            except:
+                self.logger.warning(f'Failed on {ticker_symbol}')
+
             val = cache.get(key, None)
         return val
 
@@ -75,7 +79,7 @@ class MockBinanceManager(BinanceAPIManager):
         target_balance = self.get_currency_balance(target_symbol)
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
-        order_quantity = self._buy_quantity(origin_symbol, target_symbol, target_balance, from_coin_price)
+        order_quantity = self._buy_quantity(origin_symbol, target_symbol)
         target_quantity = order_quantity * from_coin_price
         self.balances[target_symbol] -= target_quantity
         self.balances[origin_symbol] = self.balances.get(origin_symbol, 0) + order_quantity * (
@@ -97,7 +101,7 @@ class MockBinanceManager(BinanceAPIManager):
         origin_balance = self.get_currency_balance(origin_symbol)
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
-        order_quantity = self._sell_quantity(origin_symbol, target_symbol, origin_balance)
+        order_quantity = self._sell_quantity(origin_symbol, target_symbol)
         target_quantity = order_quantity * from_coin_price
         self.balances[target_symbol] = self.balances.get(target_symbol, 0) + target_quantity * (
             1 - self.get_fee(origin_coin, target_coin, True)

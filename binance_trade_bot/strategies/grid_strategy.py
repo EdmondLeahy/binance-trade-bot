@@ -52,9 +52,9 @@ class Strategy(AutoTrader):
             if current_price < self.buy_grid_ratio:
                 self.buy_from_grid_trigger()
             else:
-                self.logger.info(f'No action. Within the doldrums. {self.buy_grid_ratio} | '
+                self.logger.info(f'No action. Within the doldrums. {np.round(current_price - self.buy_grid_ratio, 5)} | '
                                  f'{current_price} | '
-                                 f'{self.sell_grid_ratio}'
+                                 f'{np.round(self.sell_grid_ratio - current_price, 5)}'
                                  f'| {self.num_trades}')
                 return
 
@@ -69,8 +69,8 @@ class Strategy(AutoTrader):
         # self.logger.warning(f'STUBBED BUY CALL {self.manager._buy_quantity(self.current_coin, self.config.BRIDGE)}')
 
     def sell_from_grid_trigger(self):
-        # self.manager.sell_alt(self.current_coin, self.config.BRIDGE)
-        self.logger.warning(f'STUBBED SELL CALL {self.manager._sell_quantity(self.current_coin, self.config.BRIDGE)}')
+        self.manager.sell_alt(self.current_coin, self.config.BRIDGE)
+        # self.logger.warning(f'STUBBED SELL CALL {self.manager._sell_quantity(self.current_coin, self.config.BRIDGE)}')
 
     def bridge_scout(self):
         current_coin = self.db.get_current_coin()
