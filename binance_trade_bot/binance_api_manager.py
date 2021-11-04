@@ -1,8 +1,10 @@
 import math
 import numpy as np
+import pandas as pd
 import time
 import traceback
 from typing import Dict, Optional
+from datetime import datetime, timedelta
 
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
@@ -46,6 +48,29 @@ class BinanceAPIManager:
     @cached(cache=TTLCache(maxsize=1, ttl=60))
     def get_using_bnb_for_fees(self):
         return self.binance_client.get_bnb_burn_spot_margin()["spotBNBBurn"]
+
+    def get_historical_data(self, length):
+        howLong = length  # Hours
+        # Calculate the timestamps for the binance api function
+        untilThisDate = datetime.now()
+        sinceThisDate = untilThisDate - timedelta(hours=howLong)
+        # Execute the query from binance - timestamps must be converted to strings !
+        candle = self.binance_client.get_historical_klines("BNBBTC", Client.KLINE_INTERVAL_1MINUTE, str(sinceThisDate),
+                                              str(untilThisDate))
+
+        # Create a dataframe to label all the columns returned by binance so we work with them later.
+        df = pd.DataFrame(candle, columns=['dateTime', 'open', 'high', 'low', 'close', 'volume', 'closeTime',
+                                           'quoteAssetVolume', 'numberOfTrades', 'takerBuyBaseVol', 'takerBuyQuoteVol',
+                                           'ignore'])
+        # as timestamp is returned in ms, let us convert this back to proper timestamps.
+        df.dateTime = pd.to_datetime(df.dateTime, unit='ms')
+
+        # Get rid of columns we do not need
+        df = df.drop(
+            ['closeTime', 'quoteAssetVolume', 'numberOfTrades', 'takerBuyBaseVol', 'takerBuyQuoteVol', 'ignore'],
+            axis=1)
+
+        return df
 
     def get_fee(self, origin_coin: Coin, target_coin: Coin, selling: bool):
         base_fee = self.get_trade_fees()[origin_coin + target_coin]
