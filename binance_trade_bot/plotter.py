@@ -28,6 +28,7 @@ app.layout = html.Div(
 )
 
 
+
 def get_historical_data(length):
     # Calculate the timestamps for the binance api function
     until_this_date = datetime.now()
@@ -74,13 +75,10 @@ def make_layout(data, fig):
     return fig
 
 
-
-
-
 @app.callback(Output('live-graph', 'figure'),
               [Input('graph-update', 'n_intervals')])
 def graph_update(_):
-    candle_data = get_historical_data(3)
+    candle_data = get_historical_data(1)
     fig = go.Figure(go.Candlestick(x=candle_data['dateTime'],
                           open=candle_data['open'],
                           high=candle_data['high'],

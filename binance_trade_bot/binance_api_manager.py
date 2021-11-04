@@ -49,13 +49,13 @@ class BinanceAPIManager:
     def get_using_bnb_for_fees(self):
         return self.binance_client.get_bnb_burn_spot_margin()["spotBNBBurn"]
 
-    def get_historical_data(self, length):
+    def get_historical_data(self, length, pairname):
         howLong = length  # Hours
         # Calculate the timestamps for the binance api function
         untilThisDate = datetime.now()
         sinceThisDate = untilThisDate - timedelta(hours=howLong)
         # Execute the query from binance - timestamps must be converted to strings !
-        candle = self.binance_client.get_historical_klines("BNBBTC", Client.KLINE_INTERVAL_1MINUTE, str(sinceThisDate),
+        candle = self.binance_client.get_historical_klines(pairname, Client.KLINE_INTERVAL_1MINUTE, str(sinceThisDate),
                                               str(untilThisDate))
 
         # Create a dataframe to label all the columns returned by binance so we work with them later.
