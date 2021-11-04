@@ -65,12 +65,12 @@ class Strategy(AutoTrader):
         self.num_trades += 1
 
     def buy_from_grid_trigger(self):
-        self.manager.buy_alt(self.current_coin, self.config.BRIDGE)
-        # self.logger.warning(f'STUBBED BUY CALL {self.manager._buy_quantity(self.current_coin, self.config.BRIDGE)}')
+        # self.manager.buy_alt(self.current_coin, self.config.BRIDGE)
+        self.logger.warning(f'STUBBED BUY CALL {self.manager._buy_quantity(self.current_coin, self.config.BRIDGE)}')
 
     def sell_from_grid_trigger(self):
-        self.manager.sell_alt(self.current_coin, self.config.BRIDGE)
-        # self.logger.warning(f'STUBBED SELL CALL {self.manager._sell_quantity(self.current_coin, self.config.BRIDGE)}')
+        # self.manager.sell_alt(self.current_coin, self.config.BRIDGE)
+        self.logger.warning(f'STUBBED SELL CALL {self.manager._sell_quantity(self.current_coin, self.config.BRIDGE)}')
 
     def bridge_scout(self):
         current_coin = self.db.get_current_coin()
