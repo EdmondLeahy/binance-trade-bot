@@ -7,6 +7,8 @@ import dash
 from dash.dependencies import Output, Input
 import dash_core_components as dcc
 import dash_html_components as html
+import time
+
 #
 # # LOOK AT THIS : https://www.youtube.com/watch?v=37Zj955LFT0
 
@@ -21,11 +23,11 @@ app = dash.Dash(__name__)
 app.layout = html.Div(
     [
         dcc.Graph(id='live-graph', animate=True),
-        dcc.Interval(
-            id='graph-update',
-            interval=5000,
-            n_intervals=0
-        ),
+        # dcc.Interval(
+        #     id='graph-update',
+        #     interval=5000,
+        #     n_intervals=0
+        # ),
     ]
 )
 
@@ -79,14 +81,14 @@ def make_layout(data, fig):
 
 @app.callback(Output('live-graph', 'figure'),
               [Input('graph-update', 'n_intervals')])
-def graph_update(_):
+def graph_update(stuff=0.0091):
     candle_data = get_historical_data(1)
     fig = go.Figure(go.Candlestick(x=candle_data['dateTime'],
                           open=candle_data['open'],
                           high=candle_data['high'],
                           low=candle_data['low'],
                           close=candle_data['close']))
-
+    print(stuff)
     fig = add_h_line(fig, candle_data)
     fig = make_layout(candle_data, fig)
 
@@ -94,6 +96,9 @@ def graph_update(_):
 #
 def run_plot_server():
     app.run_server(debug=True, port=8051)
+    while True:
+        a = graph_update(10)
+        time.sleep(1)
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8051)
