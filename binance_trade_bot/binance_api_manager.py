@@ -370,6 +370,9 @@ class BinanceAPIManager:
             balances.clear()
 
         origin_balance = self.get_currency_balance(origin_symbol)
+        if origin_balance == 0.0:
+            for i in range(10): # Flush out buffer, sometimes it is weird?
+                origin_balance = self.get_currency_balance(origin_symbol)
         target_balance = self.get_currency_balance(target_symbol)
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
