@@ -10,6 +10,8 @@ import dash_html_components as html
 #
 # # LOOK AT THIS : https://www.youtube.com/watch?v=37Zj955LFT0
 
+# OR RATHER THIS: https://saralgyaan.com/posts/python-candlestick-chart-matplotlib-tutorial-chapter-11/
+
 api_key = 'rxjvvkGRGUcApapeWzUFAvJhHe3lC3doIEbfqL5v75xK4Wwo2H8MiQOoYdx1lwdI'
 api_secret_key = 'GFE02ezysvl44wWjdjL05YnpxQqz9lgGir6HEc9rcq10f0cTHSufF6kw98120Btr'
 

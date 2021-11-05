@@ -137,7 +137,7 @@ class BinanceAPIManager:
                             for currency_balance in self.binance_client.get_account()["balances"]
                         }
                     )
-                except ConnectionError:
+                except:
                     self.logger.warning('Caught an exception when getting balances')
 
                 self.logger.debug(f"Fetched all balances: {cache_balances}")
