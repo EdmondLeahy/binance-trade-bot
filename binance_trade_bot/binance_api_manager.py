@@ -128,6 +128,7 @@ class BinanceAPIManager:
         """
         with self.cache.open_balances() as cache_balances:
             balance = cache_balances.get(currency_symbol, None)
+            self.logger.info(f'Balance for {currency_symbol} is {balance}')
             if force or balance is None:
                 cache_balances.clear()
                 try:
@@ -140,11 +141,11 @@ class BinanceAPIManager:
                 except:
                     self.logger.warning('Caught an exception when getting balances')
 
-                self.logger.debug(f"Fetched all balances: {cache_balances}")
+                self.logger.info(f"Fetched all balances: {cache_balances}")
                 if currency_symbol not in cache_balances:
-                    cache_balances[currency_symbol] = 0.0
-                    return 0.0
-                return cache_balances.get(currency_symbol, 0.0)
+                    cache_balances[currency_symbol] = -1.0
+                    return -1.0
+                return cache_balances.get(currency_symbol, -2.0)
 
             return balance
 
@@ -371,15 +372,18 @@ class BinanceAPIManager:
 
         origin_balance = self.get_currency_balance(origin_symbol)
         if origin_balance == 0.0:
-            for i in range(10): # Flush out buffer, sometimes it is weird?
-                origin_balance = self.get_currency_balance(origin_symbol)
+            origin_balance = self.get_currency_balance(origin_symbol, force=True)
+            # for i in range(10): # Flush out buffer, sometimes it is weird?
+            #     self.logger.warning(f'{origin_balance}')
+            #     time.sleep(1)
         target_balance = self.get_currency_balance(target_symbol)
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
         order_quantity = self._sell_quantity(origin_symbol, target_symbol)
         if origin_balance < order_quantity:
             self.logger.warning('Not enough balance to sell! Cancelling. '
-                                f'Attempted: {order_quantity} of <{origin_symbol}')
+                                f'Attempted: {order_quantity} of <{origin_symbol}\n'
+                                f'Balance: {origin_balance}')
             return None
         self.logger.info(f"Selling {order_quantity} of {origin_symbol}")
 
