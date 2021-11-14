@@ -128,7 +128,7 @@ class BinanceAPIManager:
         """
         with self.cache.open_balances() as cache_balances:
             balance = cache_balances.get(currency_symbol, None)
-            self.logger.info(f'Balance for {currency_symbol} is {balance}')
+            self.logger.info(f'Balance for {currency_symbol} is {balance}. Force is: {force}')
             if force or balance is None:
                 cache_balances.clear()
                 try:
@@ -141,8 +141,9 @@ class BinanceAPIManager:
                 except:
                     self.logger.warning('Caught an exception when getting balances')
 
-                self.logger.info(f"Fetched all balances: {cache_balances}")
+                self.logger.debug(f"Fetched all balances: {cache_balances}")
                 if currency_symbol not in cache_balances:
+                    self.logger.debug(f"{currency_symbol} is not in cache_balances! Why??")
                     cache_balances[currency_symbol] = -1.0
                     return -1.0
                 return cache_balances.get(currency_symbol, -2.0)
@@ -282,7 +283,7 @@ class BinanceAPIManager:
         buy_amount = ((self.config.WAGER_SIZE/100)*origin_balance)*from_coin_price # IN TARGET
         notional = self.get_min_notional(origin_symbol, target_symbol) # IN TARGET
         if buy_amount < notional:
-            buy_amount = notional
+            buy_amount = notional*(1.0000001) # for notional reasons
         origin_tick = self.get_alt_tick(origin_symbol, target_symbol)
 
         buy_quantity = np.round(((buy_amount/origin_tick)*origin_tick) / from_coin_price, 4)
@@ -302,6 +303,9 @@ class BinanceAPIManager:
         origin_balance = self.get_currency_balance(origin_symbol)
         target_balance = self.get_currency_balance(target_symbol)
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
+
+        if target_balance <= 0.0:
+            target_balance = self.get_currency_balance(target_symbol, force=True)
 
         order_quantity = self._buy_quantity(origin_symbol, target_symbol)
 
@@ -353,7 +357,7 @@ class BinanceAPIManager:
         sell_amount = (self.config.WAGER_SIZE / 100) * origin_balance * to_coin_price # in TARGET
         min_notional = self.get_min_notional(origin_symbol, target_symbol) # in TARGET
         if sell_amount < min_notional:
-            sell_amount = min_notional
+            sell_amount = min_notional*(1.0000001) # for notional reasons
         origin_tick = self.get_alt_tick(origin_symbol, target_symbol) # in TARGET
 
         sell_quantity_origin = np.round(((sell_amount / origin_tick) * origin_tick) / to_coin_price, 4)# in ORIGIN
@@ -371,7 +375,7 @@ class BinanceAPIManager:
             balances.clear()
 
         origin_balance = self.get_currency_balance(origin_symbol)
-        if origin_balance == 0.0:
+        if origin_balance <= 0.0:
             origin_balance = self.get_currency_balance(origin_symbol, force=True)
             # for i in range(10): # Flush out buffer, sometimes it is weird?
             #     self.logger.warning(f'{origin_balance}')
