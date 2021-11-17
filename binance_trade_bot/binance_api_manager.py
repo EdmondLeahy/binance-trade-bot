@@ -280,13 +280,16 @@ class BinanceAPIManager:
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
         # Set at WAGER percent of what we are currently holding
-        buy_amount = ((self.config.WAGER_SIZE/100)*origin_balance)*from_coin_price # IN TARGET
+        buy_amount = np.round(((self.config.WAGER_SIZE/100)*origin_balance)*from_coin_price, 4) # IN TARGET
         notional = self.get_min_notional(origin_symbol, target_symbol) # IN TARGET
-        if buy_amount < notional:
-            buy_amount = notional*(1.0000001) # for notional reasons
+        if buy_amount < notional*1.001:
+            buy_amount = notional
         origin_tick = self.get_alt_tick(origin_symbol, target_symbol)
 
         buy_quantity = np.round(((buy_amount/origin_tick)*origin_tick) / from_coin_price, 4)
+        if buy_quantity < (notional/from_coin_price):
+            buy_quantity = np.ceil((notional/from_coin_price)*10000)/10000
+        self.logger.info(f'Buy quantity: {buy_amount}. Min notional: {notional}')
         return buy_quantity
 
     def _buy_alt(self, origin_coin: Coin, target_coin: Coin):
@@ -304,7 +307,7 @@ class BinanceAPIManager:
         target_balance = self.get_currency_balance(target_symbol)
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
-        if target_balance <= 0.0:
+        if not target_balance or target_balance <= 0.0:
             target_balance = self.get_currency_balance(target_symbol, force=True)
 
         order_quantity = self._buy_quantity(origin_symbol, target_symbol)
@@ -354,13 +357,16 @@ class BinanceAPIManager:
         to_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
         # Set at WAGER percent of what we are currently holding
-        sell_amount = (self.config.WAGER_SIZE / 100) * origin_balance * to_coin_price # in TARGET
+        sell_amount = np.round((self.config.WAGER_SIZE / 100) * origin_balance * to_coin_price, 4) # in TARGET
         min_notional = self.get_min_notional(origin_symbol, target_symbol) # in TARGET
-        if sell_amount < min_notional:
-            sell_amount = min_notional*(1.0000001) # for notional reasons
+        if sell_amount < min_notional*1.001:
+            sell_amount = min_notional
         origin_tick = self.get_alt_tick(origin_symbol, target_symbol) # in TARGET
 
         sell_quantity_origin = np.round(((sell_amount / origin_tick) * origin_tick) / to_coin_price, 4)# in ORIGIN
+        if sell_quantity_origin < (min_notional/to_coin_price):
+            sell_quantity_origin = np.ceil((min_notional/to_coin_price)*10000)/10000
+        self.logger.info(f'Sell quantity: {sell_amount}. Min notional: {min_notional}')
         return sell_quantity_origin
 
     def _sell_alt(self, origin_coin: Coin, target_coin: Coin):
@@ -384,7 +390,7 @@ class BinanceAPIManager:
         from_coin_price = self.get_ticker_price(origin_symbol + target_symbol)
 
         order_quantity = self._sell_quantity(origin_symbol, target_symbol)
-        if origin_balance < order_quantity:
+        if not origin_balance or origin_balance < order_quantity:
             self.logger.warning('Not enough balance to sell! Cancelling. '
                                 f'Attempted: {order_quantity} of <{origin_symbol}\n'
                                 f'Balance: {origin_balance}')
