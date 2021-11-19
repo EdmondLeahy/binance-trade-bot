@@ -204,7 +204,7 @@ class BinanceAPIManager:
             try:
                 order_status = self.cache.orders.get(order_id, None)
 
-                self.logger.debug(f"Waiting for order {order_id} to be filled")
+                self.logger.info(f"Waiting for order {order_id} to be filled")
 
                 if self._should_cancel_order(order_status):
                     cancel_order = None
@@ -252,13 +252,14 @@ class BinanceAPIManager:
     def _should_cancel_order(self, order_status):
         minutes = (time.time() - order_status.time / 1000) / 60
         timeout = 0
-
+        self.logger.info(f'Minutes: {minutes}')
         if order_status.side == "SELL":
             timeout = float(self.config.SELL_TIMEOUT)
         else:
             timeout = float(self.config.BUY_TIMEOUT)
 
-        if timeout and minutes > timeout and order_status.status == "NEW":
+        self.logger.info(f'Timeout: {timeout}. Order status: {order_status.status}')
+        if timeout and minutes > timeout and order_status.status in ["NEW", "EXPIRED"]:
             return True
 
         if timeout and minutes > timeout and order_status.status == "PARTIALLY_FILLED":
@@ -323,22 +324,28 @@ class BinanceAPIManager:
         order_guard = self.stream_manager.acquire_order_guard()
         while order is None:
             try:
+                self.logger.info('Trying to order')
                 order = self.binance_client.order_limit_buy(
                     symbol=origin_symbol + target_symbol,
                     quantity=order_quantity,
                     price=from_coin_price,
+                    timeInForce=self.binance_client.TIME_IN_FORCE_IOC
                 )
-                self.logger.info(order)
+                self.logger.info(f'order is: {order}')
             except BinanceAPIException as e:
                 self.logger.info(e)
                 time.sleep(1)
             except Exception as e:  # pylint: disable=broad-except
                 self.logger.warning(f"Unexpected Error: {e}")
-
+        self.logger.info('Setting ordered in database')
         trade_log.set_ordered(origin_balance, target_balance, order_quantity)
-
+        self.logger.info('Order set')
+        self.logger.info('Setting ordered in database with Order ID')
         order_guard.set_order(origin_symbol, target_symbol, int(order["orderId"]))
+        self.logger.info('Order set')
+        self.logger.info('Starting waiting for order')
         order = self.wait_for_order(order["orderId"], origin_symbol, target_symbol, order_guard)
+        self.logger.info('wait complete')
 
         if order is None:
             return None
